@@ -1,2 +1,1 @@
-# digit-dns
-Rundeck Ansible SCripts
+# Rundeck Ansible SCripts
