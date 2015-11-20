@@ -1,0 +1,65 @@
+---
+# Debian based OS
+- name: Rundeck | Install supporting packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  sudo: yes
+  with_items:
+    - python-pip
+
+- name: Rundeck | Install supporting python packages
+  pip:
+    name: "{{ item }}"
+    state: present
+  sudo: yes
+  with_items:
+    - httplib2
+
+- name: Rundeck | Find installed package version
+  shell: "dpkg -s rundeck 2>null | grep Version | awk '{print $2}'"
+  register: rundeck_installed_version
+  tags:
+    - rundeck
+    - install
+    - packages
+
+- debug: var=rundeck_installed_version.stdout
+
+- name: Rundeck | Check to see if download exists
+  stat:
+    path: "{{ rundeck_download_path }}/{{ rundeck_version }}"
+  when: rundeck_installed_version.stdout == ''
+  register: rundeck_download_check
+  tags:
+    - rundeck
+    - install
+    - packages
+
+- name: Rundeck | download .deb file
+  get_url:
+    dest: "{{ rundeck_download_path }}/{{ rundeck_version }}"
+    url: "http://download.rundeck.org/deb/{{ rundeck_version }}"
+    mode: 0644
+  register: rundeck_downloaded
+  when: rundeck_download_check is defined and rundeck_download_check.stat.exists == false
+  tags:
+    - rundeck
+    - install
+    - packages
+
+- name: Rundeck | install from .deb package
+  command: "dpkg --skip-same-version -i {{ rundeck_download_path }}/{{ rundeck_version }}"
+  when: (rundeck_download_check is defined and rundeck_download_check.stat.exists == true) or rundeck_downloaded|changed
+  changed_when: "dpkg_result.stdout.startswith('Selecting')"
+  register: dpkg_result
+  sudo: yes
+  notify:
+    - restart rundeck
+  tags:
+    - rundeck
+    - install
+    - packages
+
+- name: Rundeck | Make rundeck the owner of /var/lib/rundeck
+  file: path=/var/lib/rundeck owner=rundeck group=rundeck state=directory

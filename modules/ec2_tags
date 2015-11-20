@@ -1,0 +1,41 @@
+#!/usr/bin/python
+
+try:
+  import boto.ec2
+  import re
+except ImportError, e:
+  print "failed=True msg='failed to import python module: %s'" % e
+  sys.exit(1)
+
+ec2_availability_zone_uri = "http://169.254.169.254/latest/meta-data/placement/availability-zone/"
+ec2_instance_id_uri = "http://169.254.169.254/latest/meta-data/instance-id/"
+
+def get_region(module):
+  p = re.compile("\w*-\w*-\d*")
+
+  (response, info) = fetch_url(module, ec2_availability_zone_uri)
+  availability_zone = response.read()
+
+  m = p.match(availability_zone)
+  return availability_zone[m.start():m.end()]
+
+def get_instance_id(module):
+  (response, info) = fetch_url(module, ec2_instance_id_uri)
+  return response.read()
+
+def get_tags(module):
+  region = get_region(module)
+  instance_id = get_instance_id(module)
+
+  conn = boto.ec2.connect_to_region(region)
+  reservations = conn.get_all_instances(instance_ids=[instance_id])
+  return reservations[0].instances[0].tags
+
+def main():
+  module = AnsibleModule(argument_spec=url_argument_spec())
+  tag_facts = get_tags(module)
+  module.exit_json(changed=True, ansible_facts = dict(ec2_tags=tag_facts))
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+main()

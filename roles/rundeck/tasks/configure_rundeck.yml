@@ -1,0 +1,25 @@
+- name: Rundeck | Ensure upstart setgid is set to jetty group
+  lineinfile: >
+    dest=/etc/init/rundeckd.conf
+    regexp="^setgid "
+    line="setgid jetty"
+  when: ansible_os_family == 'Debian'
+  notify:
+    - restart rundeck
+
+- name: Rundeck | Ensure server url is configured
+  lineinfile: >
+    dest=/etc/rundeck/rundeck-config.properties
+    regexp="^grails.serverURL="
+    line="grails.serverURL=http://{{ rundeck_domain }}:{{rundeck_port}}"
+  notify:
+    - restart rundeck
+
+- name: Rundeck | Set Project Storage Type
+  lineinfile: >
+    dest=/etc/rundeck/rundeck-config.properties
+    regexp="^rundeck.projectsStorageType="
+    line="rundeck.projectsStorageType=db"
+  when: rundeck_storage_type == 'db'
+  notify:
+    - restart rundeck

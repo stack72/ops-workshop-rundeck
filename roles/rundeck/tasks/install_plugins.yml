@@ -1,0 +1,37 @@
+- name: download rundeck plugins
+  get_url: >
+    dest=/var/lib/rundeck/libext/{{ item.split('/')|last }}
+    url={{ item }}
+  with_items: rundeck_plugins
+  notify:
+    - restart rundeck
+  tags:
+    - rundeck
+    - plugins
+
+- name: Rundeck | Set FileStoragePlugin
+  lineinfile: >
+    dest=/etc/rundeck/rundeck-config.properties
+    regexp="^rundeck.execution.logs.fileStoragePlugin="
+    line="rundeck.execution.logs.fileStoragePlugin=org.rundeck.amazon-s3"
+  when: rundeck_logging_facility == 'S3'
+  notify:
+    - restart rundeck
+
+- name: Rundeck | Set S3 FileStorage Bucket
+  lineinfile: >
+    dest=/etc/rundeck/framework.properties
+    regexp="^framework.plugin.ExecutionFileStorage.org.rundeck.amazon-s3.bucket="
+    line="framework.plugin.ExecutionFileStorage.org.rundeck.amazon-s3.bucket=digit-rundeck"
+  when: rundeck_logging_facility == 'S3'
+  notify:
+    - restart rundeck
+
+- name: Rundeck | Set S3 FileStorage Path
+  lineinfile: >
+    dest=/etc/rundeck/framework.properties
+    regexp="^framework.plugin.ExecutionFileStorage.org.rundeck.amazon-s3.path="
+    line="framework.plugin.ExecutionFileStorage.org.rundeck.amazon-s3.path=logs/${job.project}/${job.execid}.log"
+  when: rundeck_logging_facility == 'S3'
+  notify:
+    - restart rundeck

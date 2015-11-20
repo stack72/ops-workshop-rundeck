@@ -1,0 +1,24 @@
+---
+- name: Rundeck | Set behind SSL Proxy
+  lineinfile: >
+    dest=/etc/rundeck/profile
+    regexp='^RDECK_JVM="$RDECK_JVM -Drundeck.jetty.connector.forwarded=true"'
+    line='RDECK_JVM="$RDECK_JVM -Drundeck.jetty.connector.forwarded=true"'
+  notify:
+    - restart rundeck
+
+- name: Rundeck | Configure rundeck server.url
+  lineinfile: >
+    dest=/etc/rundeck/framework.properties
+    regexp='^framework.server.url = '
+    line='framework.server.url = {{ rundeck_proxy_domain }}'
+  notify:
+    - restart rundeck
+
+- name: Rundeck | Configure rundeck grails.serverURL
+  lineinfile: >
+    dest=/etc/rundeck/rundeck-config.properties
+    regexp='^grails.serverURL='
+    line='grails.serverURL={{ rundeck_proxy_domain }}'
+  notify:
+    - restart rundeck

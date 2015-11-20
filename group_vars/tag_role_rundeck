@@ -1,0 +1,20 @@
+---
+proxy_urls:
+  - reverse_proxy_url: /
+    reverse_proxy_upstream_port: 4440
+sensu_group_names:
+  - web
+rundeck_database_type: mysql
+rundeck_database_host: ""
+rundeck_database_port: 3306
+rundeck_plugins: ['http://github.com/rundeck-plugins/rundeck-ec2-nodes-plugin/releases/download/1.5/rundeck-ec2-nodes-plugin-1.5.jar','https://github.com/stack72/rundeck-slack-incoming-webhook-plugin/releases/download/v0.4.dev/rundeck-slack-incoming-webhook-plugin-0.4.jar','https://github.com/rundeck-plugins/rundeck-s3-log-plugin/releases/download/v1.0.0/rundeck-s3-log-plugin-1.0.0.jar']
+rundeck_use_ssl: False
+rundeck_clustering: False
+rundeck_storage_type: 'db'
+rundeck_notification_type: 'slack'
+rundeck_users:
+  - name: 'paulstack@dreamitget.it'
+    password: 'MD5:a74cd9835e2bfe768099abd6e6e7dd55'
+    roles:
+      - user
+      - admin

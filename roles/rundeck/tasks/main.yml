@@ -1,0 +1,65 @@
+- ec2_facts:
+- ec2_tags:
+
+# install rundeck
+- include: install_jdk.yml
+
+- include: install_debian.yml
+
+# corrections to run with other jetty applications
+#  create groups and adjust user
+- name: Rundeck | Ensure jetty group exists
+  group: >
+    name=jetty
+    system=yes
+  when: ansible_os_family == 'Debian'
+  tags:
+    - rundeck
+    - users
+    - groups
+
+- name: Rundeck | Ensure rundeck user is apart of jetty and docker groups
+  user: >
+    name=rundeck
+    groups=jetty,docker
+    createhome=yes
+    home=/var/lib/rundeck
+    system=yes
+  when: ansible_os_family == 'Debian'
+  tags:
+    - rundeck
+    - users
+    - groups
+
+- name: Rundeck | Ensure tmp directory has correct permissions
+  file:
+    path: /tmp/rundeck
+    state: directory
+    owner: rundeck
+    mode: 0755
+  tags:
+    - rundeck
+    - users
+
+- include: configure_rundeck.yml
+
+- include: mysql.yml
+  when: rundeck_database_type == 'mysql'
+
+# user management
+- include: users.yml
+
+# extras
+- include: install_plugins.yml
+
+- include: setup_ssl.yml
+  when: rundeck_use_ssl == True
+  notify: register_elb
+
+- file: path=/etc/ansible mode=755 state=directory
+
+- name: configure ansible
+  copy: src=roles/rundeck/files/ansible.cfg dest=/opt/ansible/ansible.cfg mode=644 owner=root
+
+- name: make sure rundeck owns ansible
+  file: path=/opt/ansible owner=rundeck group=rundeck recurse=yes state=directory

@@ -1,0 +1,15 @@
+# - group: name=deploy
+#
+# - name: Configure passwordless-sudo group
+#   copy: 'content="%deploy ALL=(ALL) NOPASSWD: ALL" dest=/etc/sudoers.d/10-deploy owner=root group=root mode=0400'
+#
+# - service: name=sudo state=restarted
+#
+# - user: name=deploy shell=/bin/bash groups=deploy
+#
+# - name: Create deploy users .ssh directory
+#   file: path=/home/deploy/.ssh state=directory mode=0755 owner=deploy group=deploy
+#
+# - command: "aws s3 cp s3://digit-datastore/keys/deploy-key.pub /home/deploy/.ssh/authorized_keys"
+#
+# - file: path=/home/deploy/.ssh/authorized_keys mode=0600 owner=deploy group=deploy
